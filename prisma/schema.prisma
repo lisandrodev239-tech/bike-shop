@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  email       String   @unique
+  password    String
+  rol         String   @default("cliente")
+  telefono    String?
+  direccion   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  ventas      Venta[]
+  citas       CitaReparacion[]
+}
+
+model Producto {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  precio      Float
+  stock       Int      @default(0)
+  categoria   String
+  marca       String?
+  imagen      String?
+  estado      String   @default("activo")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  detallesVenta  DetalleVenta[]
+  servicios      ServicioReparacion[]
+}
+
+model Venta {
+  id          Int      @id @default(autoincrement())
+  clienteId   Int
+  total       Float
+  estado      String   @default("pendiente")
+  fecha       DateTime @default(now())
+  mpPaymentId String?
+  mpMerchantOrderId String?
+  mpPreferenceId String?
+  
+  cliente     User     @relation(fields: [clienteId], references: [id])
+  detalles    DetalleVenta[]
+}
+
+model DetalleVenta {
+  id         Int      @id @default(autoincrement())
+  ventaId    Int
+  productoId Int
+  cantidad   Int
+  precio     Float
+  
+  venta      Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  producto   Producto @relation(fields: [productoId], references: [id])
+}
+
+model CitaReparacion {
+  id            Int      @id @default(autoincrement())
+  clienteId     Int
+  tipoBicicleta String
+  descripcion   String
+  fecha         DateTime
+  hora          String
+  estado        String   @default("pendiente")
+  costoEstimado Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  cliente       User     @relation(fields: [clienteId], references: [id])
+  servicios     ServicioReparacion[]
+}
+
+model Servicio {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  costo       Float
+  descripcion String?
+  
+  servicios   ServicioReparacion[]
+}
+
+model ServicioReparacion {
+  id              Int     @id @default(autoincrement())
+  citaId          Int
+  productoId      Int?
+  servicioId      Int?
+  descripcion      String
+  costo            Float
+  
+  cita             CitaReparacion @relation(fields: [citaId], references: [id], onDelete: Cascade)
+  producto         Producto?       @relation(fields: [productoId], references: [id])
+  servicio         Servicio?       @relation(fields: [servicioId], references: [id])
+}
+
+model Proveedor {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  contacto  String?
+  telefono  String?
+  email     String?
+  createdAt DateTime @default(now())
+  
+  pedidos   PedidoCompra[]
+}
+
+model PedidoCompra {
+  id          Int      @id @default(autoincrement())
+  proveedorId Int
+  estado      String   @default("pendiente")
+  fecha       DateTime @default(now())
+  total       Float?
+  
+  proveedor   Proveedor @relation(fields: [proveedorId], references: [id])
+}
