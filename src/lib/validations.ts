@@ -18,7 +18,8 @@ export const productoSchema = z.object({
   descripcion: z.string().optional(),
   precio: z.number().positive('El precio debe ser positivo'),
   stock: z.number().int().min(0, 'El stock no puede ser negativo'),
-  categoria: z.string().min(1, 'La categoría es requerida'),
+  stockMinimo: z.number().int().min(1, 'El stock mínimo debe ser positivo').default(5),
+  categoria: z.enum(['bicicletas', 'accesorios', 'partes', 'herramientas']),
   marca: z.string().optional(),
   imagen: z.string().optional(),
   estado: z.enum(['activo', 'inactivo']).default('activo'),
@@ -37,6 +38,12 @@ export const citaSchema = z.object({
 export const updateCitaSchema = z.object({
   estado: z.enum(['pendiente', 'en_proceso', 'terminado', 'entregado']),
   costoEstimado: z.number().optional(),
+})
+
+export const ventaSchema = z.object({
+  clienteId: z.number().int().positive(),
+  total: z.number().positive(),
+  estado: z.enum(['pendiente', 'completada', 'cancelada']).default('pendiente'),
 })
 
 export const proveedorSchema = z.object({

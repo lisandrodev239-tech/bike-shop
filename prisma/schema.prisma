@@ -4,7 +4,38 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
+}
+
+enum Categoria {
+  bicicletas
+  accesorios
+  partes
+  herramientas
+}
+
+enum EstadoProducto {
+  activo
+  inactivo
+}
+
+enum EstadoVenta {
+  pendiente
+  completada
+  cancelada
+}
+
+enum EstadoReparacion {
+  pendiente
+  en_proceso
+  terminado
+  entregado
+}
+
+enum EstadoPedido {
+  pendiente
+  completado
+  cancelado
 }
 
 model User {
@@ -28,22 +59,24 @@ model Producto {
   descripcion String?
   precio      Float
   stock       Int      @default(0)
-  categoria   String
+  stockMinimo Int      @default(5)
+  categoria   Categoria
   marca       String?
   imagen      String?
-  estado      String   @default("activo")
+  estado      EstadoProducto @default(activo)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   detallesVenta  DetalleVenta[]
   servicios      ServicioReparacion[]
+  pedidoDetalles PedidoDetalle[]
 }
 
 model Venta {
   id          Int      @id @default(autoincrement())
   clienteId   Int
   total       Float
-  estado      String   @default("pendiente")
+  estado      EstadoVenta @default(pendiente)
   fecha       DateTime @default(now())
   mpPaymentId String?
   mpMerchantOrderId String?
@@ -71,7 +104,7 @@ model CitaReparacion {
   descripcion   String
   fecha         DateTime
   hora          String
-  estado        String   @default("pendiente")
+  estado        EstadoReparacion @default(pendiente)
   costoEstimado Float?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -116,9 +149,21 @@ model Proveedor {
 model PedidoCompra {
   id          Int      @id @default(autoincrement())
   proveedorId Int
-  estado      String   @default("pendiente")
+  estado      EstadoPedido @default(pendiente)
   fecha       DateTime @default(now())
   total       Float?
   
   proveedor   Proveedor @relation(fields: [proveedorId], references: [id])
+  detalles    PedidoDetalle[]
+}
+
+model PedidoDetalle {
+  id            Int     @id @default(autoincrement())
+  pedidoId      Int
+  productoId    Int
+  cantidad      Int
+  costoUnitario Float
+  
+  pedido    PedidoCompra @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto Producto      @relation(fields: [productoId], references: [id])
 }

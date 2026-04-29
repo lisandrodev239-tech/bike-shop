@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { citaSchema, updateCitaSchema } from '@/lib/validations'
 import { getUserFromCookies } from '@/lib/auth'
+import { EstadoReparacion } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
         fecha: new Date(fecha),
         hora,
         costoEstimado,
-        estado: 'pendiente',
+        estado: EstadoReparacion.pendiente,
       },
     })
 

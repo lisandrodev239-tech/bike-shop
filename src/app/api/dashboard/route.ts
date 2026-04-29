@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromCookies } from '@/lib/auth'
+import { EstadoVenta, EstadoReparacion, EstadoProducto } from '@prisma/client'
 
 export async function GET() {
   try {
@@ -30,13 +31,13 @@ export async function GET() {
       reparacionesPorEstado,
     ] = await Promise.all([
       prisma.venta.aggregate({
-        where: { estado: 'aprobado' },
+        where: { estado: EstadoVenta.completada },
         _sum: { total: true },
         _count: true,
       }),
       prisma.venta.aggregate({
         where: {
-          estado: 'aprobado',
+          estado: EstadoVenta.completada,
           fecha: {
             gte: hoy,
             lt: manana,
@@ -54,26 +55,26 @@ export async function GET() {
       prisma.producto.findMany({
         where: {
           stock: { lte: 5 },
-          estado: 'activo',
+          estado: EstadoProducto.activo,
         },
         orderBy: { stock: 'asc' },
         take: 5,
       }),
       prisma.citaReparacion.count({
-        where: { estado: 'pendiente' },
+        where: { estado: EstadoReparacion.pendiente },
       }),
       prisma.citaReparacion.count({
-        where: { estado: 'en_proceso' },
+        where: { estado: EstadoReparacion.en_proceso },
       }),
       prisma.venta.findMany({
-        where: { estado: 'aprobado' },
+        where: { estado: EstadoVenta.completada },
         select: {
           fecha: true,
           total: true,
         },
       }),
       prisma.venta.aggregate({
-        where: { estado: 'aprobado' },
+        where: { estado: EstadoVenta.completada },
         _sum: { total: true },
       }),
       prisma.citaReparacion.groupBy({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { updateCitaSchema } from '@/lib/validations'
 import { getUserFromCookies } from '@/lib/auth'
+import { EstadoReparacion } from '@prisma/client'
 
 export async function GET(
   request: NextRequest,

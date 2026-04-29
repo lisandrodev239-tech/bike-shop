@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromCookies } from '@/lib/auth'
+import { EstadoVenta } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
       data: {
         clienteId: user.userId,
         total,
-        estado: 'pendiente',
+        estado: EstadoVenta.pendiente,
         detalles: {
           create: detallesConPrecio,
         },

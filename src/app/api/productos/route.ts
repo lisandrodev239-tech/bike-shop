@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { productoSchema } from '@/lib/validations'
 import { getUserFromCookies } from '@/lib/auth'
+import { Categoria, EstadoProducto } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const categoria = searchParams.get('categoria')
+    const categoria = searchParams.get('categoria') as Categoria | null
     const busqueda = searchParams.get('busqueda')
     const minPrecio = searchParams.get('minPrecio')
     const maxPrecio = searchParams.get('maxPrecio')
@@ -14,17 +15,17 @@ export async function GET(request: NextRequest) {
     const pagina = parseInt(searchParams.get('pagina') || '1')
     const limite = parseInt(searchParams.get('limite') || '12')
 
-    const where: any = { estado: 'activo' }
+    const where: any = { estado: EstadoProducto.activo }
 
-    if (categoria) {
+    if (categoria && Object.values(Categoria).includes(categoria)) {
       where.categoria = categoria
     }
 
     if (busqueda) {
       where.OR = [
-        { nombre: { contains: busqueda } },
-        { descripcion: { contains: busqueda } },
-        { marca: { contains: busqueda } },
+        { nombre: { contains: busqueda, mode: 'insensitive' } },
+        { descripcion: { contains: busqueda, mode: 'insensitive' } },
+        { marca: { contains: busqueda, mode: 'insensitive' } },
       ]
     }
 

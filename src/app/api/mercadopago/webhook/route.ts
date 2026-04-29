@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { EstadoVenta } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
         await prisma.venta.update({
           where: { id: ventaId },
           data: {
-            estado: 'aprobado',
+            estado: EstadoVenta.completada,
             mpPaymentId: paymentId.toString(),
             mpMerchantOrderId: payment.order?.id?.toString(),
           },
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
         await prisma.venta.update({
           where: { id: ventaId },
           data: {
-            estado: 'rechazado',
+            estado: EstadoVenta.cancelada,
             mpPaymentId: paymentId.toString(),
           },
         })

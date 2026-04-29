@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Edit, Trash2, Search, Package, TrendingUp, Users } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Package, TrendingUp, Users, Upload, X } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 
 interface Producto {
@@ -17,6 +17,7 @@ interface Producto {
   descripcion?: string
   imagen?: string
   estado: string
+  stockMinimo?: number
 }
 
 export default function AdminProductosPage() {
@@ -28,6 +29,8 @@ export default function AdminProductosPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingProducto, setEditingProducto] = useState<Producto | null>(null)
   const [busqueda, setBusqueda] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string>('')
 
   useEffect(() => {
     if (!authLoading) {
@@ -38,6 +41,14 @@ export default function AdminProductosPage() {
       }
     }
   }, [user, authLoading])
+
+  useEffect(() => {
+    if (showModal && editingProducto) {
+      setImagePreview(editingProducto.imagen || '')
+    } else if (!showModal) {
+      setImagePreview('')
+    }
+  }, [showModal, editingProducto])
 
   const fetchProductos = async () => {
     try {
@@ -67,6 +78,34 @@ export default function AdminProductosPage() {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('imagen', file)
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (res.ok) {
+        const { url } = await res.json()
+        setImagePreview(url)
+        showToast('Imagen subida', 'success')
+      } else {
+        showToast('Error al subir imagen', 'error')
+      }
+    } catch (error) {
+      showToast('Error al subir imagen', 'error')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
@@ -74,6 +113,11 @@ export default function AdminProductosPage() {
 
     data.precio = parseFloat(data.precio as string)
     data.stock = parseInt(data.stock as string)
+    data.stockMinimo = parseInt(data.stockMinimo as string) || 5
+
+    if (imagePreview) {
+      data.imagen = imagePreview
+    }
 
     try {
       const url = editingProducto
@@ -94,6 +138,7 @@ export default function AdminProductosPage() {
         )
         setShowModal(false)
         setEditingProducto(null)
+        setImagePreview('')
         fetchProductos()
       } else {
         const error = await res.json()
@@ -379,12 +424,52 @@ export default function AdminProductosPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL de Imagen
+                  Imagen del Producto
+                </label>
+                <div className="space-y-3">
+                  {(imagePreview || editingProducto?.imagen) && (
+                    <div className="relative w-32 h-32 bg-gray-100 rounded-lg overflow-hidden">
+                      <img
+                        src={imagePreview || editingProducto?.imagen}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImagePreview('')}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <label className="cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition flex items-center gap-2">
+                      <Upload className="w-4 h-4" />
+                      {uploading ? 'Subiendo...' : 'Subir Imagen'}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImageUpload}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </label>
+                    {uploading && (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock Mínimo (Alerta)
                 </label>
                 <input
-                  type="url"
-                  name="imagen"
-                  defaultValue={editingProducto?.imagen}
+                  type="number"
+                  name="stockMinimo"
+                  defaultValue={editingProducto?.stockMinimo || 5}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
